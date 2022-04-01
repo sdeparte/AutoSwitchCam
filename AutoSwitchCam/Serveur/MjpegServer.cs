@@ -9,7 +9,8 @@ namespace AutoSwitchCam
     {
         private const int _handlerThread = 2;
 
-        private HttpListener _listener;
+        private readonly HttpListener _listener;
+
         private MemoryStream _currentFrame = new MemoryStream();
 
         public MjpegServer(string url)

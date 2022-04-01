@@ -5,9 +5,109 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:AutoSwitchCam"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800" Closing="Window_Closing">
+        Background="{DynamicResource BackgroundColour}"
+        BorderBrush="{DynamicResource WindowBorderColour}"
+        Title="MainWindow" Closing="Window_Closing" WindowState="Maximized" ResizeMode="NoResize" Width="1080" Height="900">
     <Grid>
-        <ComboBox x:Name="Cameras" Margin="10,5,10,0" VerticalAlignment="Top" SelectionChanged="Camera_SelectionChanged"/>
-        <Image x:Name="Image" Margin="10,40,10,10" Stretch="Uniform"/>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="2*" />
+        </Grid.ColumnDefinitions>
+        <Grid Grid.Column="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="2*" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="3*" />
+                <RowDefinition Height="3*" />
+            </Grid.RowDefinitions>
+            <ListView Grid.Row="0" x:Name="HeadsDataGrid" Margin="10,10,5,5">
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn Width="30">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Rectangle Height="20" Width="20" Fill="{Binding Path=Color}"/>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        <GridViewColumn DisplayMemberBinding="{Binding Path=RoundedX}" Header="X" Width="100"/>
+                        <GridViewColumn DisplayMemberBinding="{Binding Path=RoundedY}" Header="Y" Width="100"/>
+                        <GridViewColumn DisplayMemberBinding="{Binding Path=RoundedZ}" Header="Z" Width="100"/>
+                        <GridViewColumn DisplayMemberBinding="{Binding Path=Angle}" Header="Angle" Width="100"/>
+                    </GridView>
+                </ListView.View>
+            </ListView>
+            <Grid Grid.Row="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <ComboBox x:Name="HeadsSelectBox" Margin="5,5,5,5"/>
+                <ComboBox Grid.Row="1" x:Name="PointsSelectBox" Margin="5,5,5,5"/>
+                <Button Grid.Row="2" x:Name="SendToPoint" Content="Envoyer au point" Margin="5,5,5,5" Cursor="Hand" Click="SendToPoint_Click"/>
+            </Grid>
+            <Image Grid.Row="2" Source="{Binding BodiesImageSource, Mode=Default, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:MainWindow}}}" Margin="10,5,5,5" Stretch="Uniform" />
+            <Image Grid.Row="3" Source="{Binding HeadsImageSource, Mode=Default, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:MainWindow}}}" Margin="10,5,5,5" Stretch="Uniform" />
+        </Grid>
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="2*" />
+                <RowDefinition Height="7*" />
+            </Grid.RowDefinitions>
+            <GroupBox Header="Ajouter / Supprimer une zone" Margin="5,10,10,5">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="2*" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <ComboBox x:Name="CamerasSelectBox" Margin="5,5,5,5" SelectionChanged="Camera_SelectionChanged"/>
+                        <Grid Grid.Row="1" Margin="0,0,0,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <TextBox x:Name="X1" Grid.Row="0" Grid.Column="0" Margin="5,5,5,0" Tag="Point n°1 : X" PreviewTextInput="NumberValidationTextBox"/>
+                            <TextBox x:Name="Z1" Grid.Row="0" Grid.Column="1" Margin="5,5,5,0" Tag="Point n°1 : Z" PreviewTextInput="NumberValidationTextBox"/>
+                            <TextBox x:Name="X2" Grid.Row="0" Grid.Column="2" Margin="5,5,5,0" Tag="Point n°2 : X" PreviewTextInput="NumberValidationTextBox"/>
+                            <TextBox x:Name="Z2" Grid.Row="0" Grid.Column="3" Margin="5,5,5,0" Tag="Point n°2 : Z" PreviewTextInput="NumberValidationTextBox"/>
+                            <TextBox x:Name="X3" Grid.Row="1" Grid.Column="0" Margin="5,5,5,0" Tag="Point n°3 : X" PreviewTextInput="NumberValidationTextBox"/>
+                            <TextBox x:Name="Z3" Grid.Row="1" Grid.Column="1" Margin="5,5,5,0" Tag="Point n°3 : Z" PreviewTextInput="NumberValidationTextBox"/>
+                            <TextBox x:Name="X4" Grid.Row="1" Grid.Column="2" Margin="5,5,5,0" Tag="Point n°4 : X" PreviewTextInput="NumberValidationTextBox"/>
+                            <TextBox x:Name="Z4" Grid.Row="1" Grid.Column="3" Margin="5,5,5,0" Tag="Point n°4 : Z" PreviewTextInput="NumberValidationTextBox"/>
+                        </Grid>
+                        <Button Grid.Row="2" x:Name="AddZone" Content="Ajouter la zone" Margin="5,5,5,5" Cursor="Hand" Click="AddZone_Click"/>
+                    </Grid>
+                    <Image Grid.Column="1" x:Name="Image" Margin="5,5,5,5" Stretch="Uniform"/>
+                </Grid>
+            </GroupBox>
+            <ListView Grid.Row="1" x:Name="ZonesDataGrid" Margin="5,5,10,10">
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn DisplayMemberBinding="{Binding Path=Camera}" Header="Caméra" Width="200"/>
+                        <GridViewColumn DisplayMemberBinding="{Binding Path=X1}" Header="P1 : X" Width="100"/>
+                        <GridViewColumn DisplayMemberBinding="{Binding Path=Z1}" Header="P1 : Z" Width="100"/>
+                        <GridViewColumn DisplayMemberBinding="{Binding Path=X2}" Header="P2 : X" Width="100"/>
+                        <GridViewColumn DisplayMemberBinding="{Binding Path=Z2}" Header="P2 : Z" Width="100"/>
+                        <GridViewColumn DisplayMemberBinding="{Binding Path=X3}" Header="P3 : X" Width="100"/>
+                        <GridViewColumn DisplayMemberBinding="{Binding Path=Z3}" Header="P3 : Z" Width="100"/>
+                        <GridViewColumn DisplayMemberBinding="{Binding Path=X4}" Header="P4 : X" Width="100"/>
+                        <GridViewColumn DisplayMemberBinding="{Binding Path=Z4}" Header="P4 : Z" Width="100"/>
+                    </GridView>
+                </ListView.View>
+            </ListView>
+        </Grid>
     </Grid>
 </Window>

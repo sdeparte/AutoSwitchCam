@@ -8,7 +8,7 @@ namespace AutoSwitchCam.Model
 
         public override string ToString()
         {
-            return this.FilterInfo.Name;
+            return FilterInfo.Name;
         }
     }
 }
