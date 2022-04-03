@@ -25,43 +25,37 @@ namespace AutoSwitchCam
     {
         private FilterInfoCollection _filterInfoCollection;
         private readonly List<VideoCaptureDevice> _videoCaptureDevices = new List<VideoCaptureDevice>();
-        private int _currentStreamIndex = -1;
 
         private readonly ConfigReader _configReader = new ConfigReader();
 
         private readonly ObservableCollection<Camera> _listCameras = new ObservableCollection<Camera>();
+        public ObservableCollection<Camera> ListCameras { get { return _listCameras; } }
+
         private ObservableCollection<Zone> _listZones = new ObservableCollection<Zone>();
+
+        public ObservableCollection<Zone> ListZones
+        {
+            get
+            {
+                return _listZones;
+            }
+
+            set
+            {
+                _listZones = value;
+            }
+        }
+
         private readonly ObservableCollection<Head> _listHeads = new ObservableCollection<Head>();
+        public ObservableCollection<Head> ListHeads { get { return _listHeads; } }
 
         private MjpegServer _mjpegServer;
 
         private KinectDetector _kinectDetector;
 
-        public ImageSource BodiesImageSource
-        {
-            get
-            {
-                return _kinectDetector.BodiesImageSource;
-            }
-        }
+        public ImageSource BodiesImageSource { get { return _kinectDetector.BodiesImageSource; } }
 
-        public ImageSource HeadsImageSource
-        {
-            get
-            {
-                return _kinectDetector.HeadsImageSource;
-            }
-        }
-
-        public ObservableCollection<Zone> Get_ListZones()
-        {
-            return _listZones;
-        }
-
-        public void Set_ListZones(ObservableCollection<Zone> listZones)
-        {
-            _listZones = listZones;
-        }
+        public ImageSource HeadsImageSource { get { return _kinectDetector.HeadsImageSource; } }
 
         public MainWindow()
         {
@@ -72,13 +66,9 @@ namespace AutoSwitchCam
             _configReader.readConfigFiles(this);
 
             _mjpegServer = new MjpegServer("http://+:80/");
-            _mjpegServer.Start();
 
             _kinectDetector = new KinectDetector(this);
             _kinectDetector.NewPosition += Kinect_NewPosition;
-
-            ZonesDataGrid.ItemsSource = _listZones;
-            HeadsDataGrid.ItemsSource = _listHeads;
 
             InitHelpersSelectors();
         }
@@ -107,10 +97,8 @@ namespace AutoSwitchCam
                 _videoCaptureDevices.Add(videoCaptureDevice);
             }
 
-            SwitchStreamToCamIndex(0);
-
-            CamerasSelectBox.ItemsSource = _listCameras;
-            CamerasSelectBox.SelectedIndex = 0;
+            CameraStreamSelectBox.SelectedIndex = 0;
+            CameraZoneSelectBox.SelectedIndex = 0;
         }
 
         private void InitHelpersSelectors()
@@ -124,6 +112,25 @@ namespace AutoSwitchCam
             for (int i = 1; i <= 4; i++) { points.Add($"Point n°{i}"); }
             PointsSelectBox.ItemsSource = points;
             PointsSelectBox.SelectedIndex = 0;
+        }
+
+        private void StartStopStream_Click(object sender, RoutedEventArgs e)
+        {
+            if (_mjpegServer.IsStarted)
+            {
+                StartStopStreamButton.Content = "Démarrer le stream";
+                _mjpegServer.Stop();
+            }
+            else
+            {
+                StartStopStreamButton.Content = "Arrêter le stream";
+                _mjpegServer.Start();
+            }
+        }
+
+        private void StopStream_Click(object sender, RoutedEventArgs e)
+        {
+            _mjpegServer.Stop();
         }
 
         private void Kinect_NewPosition(object sender, Head[] heads)
@@ -150,21 +157,19 @@ namespace AutoSwitchCam
 
             Zone zoneToDisplay = ZoneHelper.GetZoneToDisplay(_listZones, _listHeads);
 
-            SwitchStreamToCamIndex(zoneToDisplay.CameraIndex);
+            CameraStreamSelectBox.SelectedIndex = zoneToDisplay?.CameraIndex ?? -1;
         }
 
-        private void SwitchStreamToCamIndex(int index)
+        private void CameraStream_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (_currentStreamIndex != index)
+            if (CameraStreamSelectBox.SelectedIndex >= 0)
             {
-                _currentStreamIndex = index;
-
                 foreach (VideoCaptureDevice captureDevice in _videoCaptureDevices)
                 {
                     captureDevice.NewFrame -= StreamVideoCapture_NewFrame;
                 }
 
-                VideoCaptureDevice videoCaptureDevice = _videoCaptureDevices[_currentStreamIndex];
+                VideoCaptureDevice videoCaptureDevice = _videoCaptureDevices[CameraStreamSelectBox.SelectedIndex];
 
                 videoCaptureDevice.NewFrame += StreamVideoCapture_NewFrame;
             }
@@ -172,26 +177,29 @@ namespace AutoSwitchCam
 
         private void StreamVideoCapture_NewFrame(object sender, NewFrameEventArgs eventArgs)
         {
-            MemoryStream imageBuffer = JpegEncoderHelper.BitmapToJpeg(eventArgs.Frame);
+            if (_mjpegServer != null && _mjpegServer.IsStarted)
+            {
+                MemoryStream imageBuffer = JpegEncoderHelper.BitmapToJpeg(eventArgs.Frame);
 
-            _mjpegServer?.NewFrame(imageBuffer);
+                _mjpegServer?.NewFrame(imageBuffer);
+            }
         }
 
-        private void Camera_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void CameraZone_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             foreach (VideoCaptureDevice captureDevice in _videoCaptureDevices)
             {
                 captureDevice.NewFrame -= PreviewVideoCapture_NewFrame;
             }
 
-            VideoCaptureDevice videoCaptureDevice = _videoCaptureDevices[CamerasSelectBox.SelectedIndex];
+            VideoCaptureDevice videoCaptureDevice = _videoCaptureDevices[CameraZoneSelectBox.SelectedIndex];
 
             videoCaptureDevice.NewFrame += PreviewVideoCapture_NewFrame;
         }
 
         private void PreviewVideoCapture_NewFrame(object sender, NewFrameEventArgs eventArgs)
         {
-            if (Application.Current != null)
+            if (_mjpegServer != null && !_mjpegServer.IsStarted)
             {
                 MemoryStream imageBuffer = JpegEncoderHelper.BitmapToJpeg(eventArgs.Frame);
 
@@ -248,15 +256,17 @@ namespace AutoSwitchCam
             if (string.IsNullOrEmpty(X1.Text) || string.IsNullOrEmpty(Z1.Text) ||
                 string.IsNullOrEmpty(X2.Text) || string.IsNullOrEmpty(Z2.Text) ||
                 string.IsNullOrEmpty(X3.Text) || string.IsNullOrEmpty(Z3.Text) ||
-                string.IsNullOrEmpty(X4.Text) || string.IsNullOrEmpty(Z4.Text))
+                string.IsNullOrEmpty(X4.Text) || string.IsNullOrEmpty(Z4.Text) ||
+                ColorHelper.IsColorString.IsMatch(ColorTextBox.Text))
             {
                 return;
             }
 
             _listZones.Add(new Zone()
             {
-                CameraName = ((Camera)CamerasSelectBox.SelectedItem).FilterInfo.Name,
-                CameraIndex = CamerasSelectBox.SelectedIndex,
+                Color = ColorTextBox.Text,
+                CameraName = ((Camera)CameraZoneSelectBox.SelectedItem).FilterInfo.Name,
+                CameraIndex = CameraZoneSelectBox.SelectedIndex,
                 X1 = Convert.ToDouble(X1.Text),
                 Z1 = Convert.ToDouble(Z1.Text),
                 X2 = Convert.ToDouble(X2.Text),
@@ -269,10 +279,15 @@ namespace AutoSwitchCam
             _configReader.updateConfigFiles(this);
         }
 
+        private void ColorValidationTextBox(object sender, TextCompositionEventArgs e)
+        {
+            e.Handled = !ColorHelper.IsAcceptableColorString.IsMatch(((TextBox)sender).Text + e.Text);
+        }
+
         private void NumberValidationTextBox(object sender, TextCompositionEventArgs e)
         {
-            Regex regex = new Regex("^[0-9]*\\.?[0-9]*q$");
-            e.Handled = regex.IsMatch(((TextBox)sender).Text + e.Text);
+            Regex regex = new Regex("^[0-9]*\\.?[0-9]*$");
+            e.Handled = !regex.IsMatch(((TextBox)sender).Text + e.Text);
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
@@ -292,6 +307,19 @@ namespace AutoSwitchCam
             {
                 _mjpegServer.Stop();
                 _mjpegServer = null;
+            }
+        }
+
+        private void ColorTextBlock_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (ColorHelper.IsColorString.IsMatch(ColorTextBox.Text))
+            {
+                System.Drawing.Color color = ColorHelper.ToColor(ColorTextBox.Text);
+                PrviewColorRectangle.Fill = new SolidColorBrush(System.Windows.Media.Color.FromRgb(color.R, color.G, color.B));
+            }
+            else
+            {
+                PrviewColorRectangle.Fill = System.Windows.Media.Brushes.Black;
             }
         }
     }

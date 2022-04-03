@@ -25,8 +25,6 @@ namespace AutoSwitchCam
         private readonly Brush _inferredJointBrush = Brushes.Yellow;
         private readonly Pen _inferredBonePen = new Pen(Brushes.Gray, 1);
 
-        private List<Brush> _zonesColors;
-
         private WriteableBitmap _colorBitmap = null;
 
         private int _bodiesCount;
@@ -211,14 +209,6 @@ namespace AutoSwitchCam
 
         private void InitColors()
         {
-            _zonesColors = new List<Brush>();
-            _zonesColors.Add(new SolidColorBrush(Color.FromArgb(127, 255, 0, 0)));
-            _zonesColors.Add(new SolidColorBrush(Color.FromArgb(127, 255, 165, 0)));
-            _zonesColors.Add(new SolidColorBrush(Color.FromArgb(127, 0, 128, 0)));
-            _zonesColors.Add(new SolidColorBrush(Color.FromArgb(127, 0, 0, 255)));
-            _zonesColors.Add(new SolidColorBrush(Color.FromArgb(127, 75, 0, 130)));
-            _zonesColors.Add(new SolidColorBrush(Color.FromArgb(127, 238, 130, 238)));
-
             _bodiesColors = new List<Brush>();
             _bodiesColors.Add(Brushes.Red);
             _bodiesColors.Add(Brushes.Orange);
@@ -419,10 +409,10 @@ namespace AutoSwitchCam
             {
                 dc.DrawRectangle(Brushes.Black, null, new Rect(0.0, 0.0, _displayWidth, _calculatedMaxHeight));
 
-                for (int i = 0; i < _main.Get_ListZones().Count; i++)
+                for (int i = 0; i < _main.ListZones.Count; i++)
                 {
-                    Zone zone = _main.Get_ListZones()[i];
-                    Brush drawBrush = _zonesColors[i]; // @TODO: Can be > than lenght !
+                    Zone zone = _main.ListZones[i];
+                    Brush drawBrush = zone.TransparentBrushColor;
 
                     Point point1 = new Point(
                         x: (_displayWidth / 2) + (zone.X1 * (_displayWidth / 2)),

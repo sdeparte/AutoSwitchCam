@@ -26,7 +26,7 @@ namespace AutoSwitchCam.Helper
             }
 
             int maxZoneHeadsCount = 0;
-            int maxIndexZone = 0;
+            int maxIndexZone = -1;
 
             for (int i = 0; i < zoneHeadsCount.Length; i++)
             {
@@ -36,7 +36,9 @@ namespace AutoSwitchCam.Helper
                 }
             }
 
-            return zones[maxIndexZone] ?? null;
+            return maxIndexZone >= 0 && maxIndexZone < zones.Count
+                ? zones[maxIndexZone]
+                : null;
         }
 
         public static Point[] ZoneToPointArray(Zone zone) => PointHelper.CoordonatesToPointArray(zone.X1, zone.Z1, zone.X2, zone.Z2, zone.X3, zone.Z3, zone.X4, zone.Z4);

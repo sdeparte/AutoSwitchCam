@@ -13,6 +13,8 @@ namespace AutoSwitchCam
 
         private MemoryStream _currentFrame = new MemoryStream();
 
+        public bool IsStarted { get { return _listener.IsListening; } }
+
         public MjpegServer(string url)
         {
             _listener = new HttpListener();

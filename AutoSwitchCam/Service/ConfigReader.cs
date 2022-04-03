@@ -16,7 +16,7 @@ namespace AutoSwitchCam.Services
             {
                 try
                 {
-                    main.Set_ListZones(_zoneSerializer.Deserialize(fs) as ObservableCollection<Zone>);
+                    main.ListZones = _zoneSerializer.Deserialize(fs) as ObservableCollection<Zone>;
                 }
                 catch (Exception ex) { }
             }
@@ -26,7 +26,7 @@ namespace AutoSwitchCam.Services
         {
             using (FileStream fs = new FileStream(@"zones.xml", FileMode.OpenOrCreate))
             {
-                _zoneSerializer.Serialize(fs, main.Get_ListZones());
+                _zoneSerializer.Serialize(fs, main.ListZones);
             }
         }
     }
