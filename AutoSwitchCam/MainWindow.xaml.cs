@@ -358,7 +358,7 @@ namespace AutoSwitchCam
 
         private void NumberValidationTextBox(object sender, TextCompositionEventArgs e)
         {
-            Regex regex = new Regex("^[0-9]*\\.?[0-9]*$");
+            Regex regex = new Regex("^\\-?[0-9]*\\.?[0-9]*$");
             e.Handled = !regex.IsMatch(((TextBox)sender).Text + e.Text);
         }
 
