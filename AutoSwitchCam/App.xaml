@@ -4,7 +4,7 @@
              xmlns:local="clr-namespace:AutoSwitchCam"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-
+        <SolidColorBrush x:Key="BackgroundShadow"  Color="#88000000" />
 
         <SolidColorBrush x:Key="BackgroundColour"  Color="#FF3A3A3A" />
         <SolidColorBrush x:Key="WindowBorderColour"  Color="#FF343434" />

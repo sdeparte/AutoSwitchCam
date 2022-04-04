@@ -7,66 +7,139 @@
         mc:Ignorable="d"
         Background="{DynamicResource BackgroundColour}"
         BorderBrush="{DynamicResource WindowBorderColour}"
-        Title="MainWindow" Closing="Window_Closing" WindowState="Maximized" ResizeMode="NoResize" Width="1080" Height="900">
+        Title="Auto Switch Camera" Closing="Window_Closing" WindowState="Maximized" ResizeMode="NoResize" Width="1080" Height="900">
+    
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="2*" />
         </Grid.ColumnDefinitions>
-        <Grid Grid.Column="0">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="2*" />
-                <RowDefinition Height="*" />
-                <RowDefinition Height="3*" />
-                <RowDefinition Height="3*" />
-            </Grid.RowDefinitions>
-            <ListView Grid.Row="0" ItemsSource="{Binding ListHeads, Mode=Default, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:MainWindow}}}" x:Name="HeadsDataGrid" Margin="10,10,5,5">
-                <ListView.View>
-                    <GridView>
-                        <GridViewColumn Width="30">
-                            <GridViewColumn.CellTemplate>
-                                <DataTemplate>
-                                    <Rectangle Height="20" Width="20" Fill="{Binding Path=Color}"/>
-                                </DataTemplate>
-                            </GridViewColumn.CellTemplate>
-                        </GridViewColumn>
-                        <GridViewColumn DisplayMemberBinding="{Binding Path=RoundedX}" Header="X" Width="100"/>
-                        <GridViewColumn DisplayMemberBinding="{Binding Path=RoundedY}" Header="Y" Width="100"/>
-                        <GridViewColumn DisplayMemberBinding="{Binding Path=RoundedZ}" Header="Z" Width="100"/>
-                        <GridViewColumn DisplayMemberBinding="{Binding Path=Angle}" Header="Angle" Width="100"/>
-                    </GridView>
-                </ListView.View>
-            </ListView>
-            <Grid Grid.Row="1">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="95" />
+            <RowDefinition Height="70" />
+            <RowDefinition Height="120" />
+            <RowDefinition Height="3*" />
+            <RowDefinition Height="3*" />
+        </Grid.RowDefinitions>
+
+        <ListView Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" ItemsSource="{Binding ListHeads, Mode=Default, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:MainWindow}}}" x:Name="HeadsDataGrid" Margin="10,10,5,5">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Width="30">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <Rectangle Height="20" Width="20" Fill="{Binding Path=Color}"/>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                    <GridViewColumn DisplayMemberBinding="{Binding Path=RoundedX}" Header="X" Width="100"/>
+                    <GridViewColumn DisplayMemberBinding="{Binding Path=RoundedY}" Header="Y" Width="100"/>
+                    <GridViewColumn DisplayMemberBinding="{Binding Path=RoundedZ}" Header="Z" Width="100"/>
+                    <GridViewColumn DisplayMemberBinding="{Binding Path=Angle}" Header="Angle" Width="100"/>
+                </GridView>
+            </ListView.View>
+        </ListView>
+        <GroupBox Grid.Column="0" Grid.Row="2" Header="Envoyer la position à un point" Margin="10,5,5,5">
+            <Grid>
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
                 <ComboBox x:Name="HeadsSelectBox" Margin="5,5,5,5"/>
-                <ComboBox Grid.Row="1" x:Name="PointsSelectBox" Margin="5,5,5,5"/>
-                <Button Grid.Row="2" x:Name="SendToPoint" Content="Envoyer au point" Margin="5,5,5,5" Cursor="Hand" Click="SendToPoint_Click"/>
+                <ComboBox Grid.Column="1" x:Name="PointsSelectBox" Margin="5,5,5,5"/>
+                <Button Grid.Row="2" Grid.ColumnSpan="2" x:Name="SendToPoint" Content="Envoyer au point" Margin="5,5,5,5" Cursor="Hand" Click="SendToPoint_Click"/>
             </Grid>
-            <Image Grid.Row="2" Source="{Binding BodiesImageSource, Mode=Default, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:MainWindow}}}" Margin="10,5,5,5" Stretch="Uniform" />
-            <Image Grid.Row="3" Source="{Binding HeadsImageSource, Mode=Default, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:MainWindow}}}" Margin="10,5,5,5" Stretch="Uniform" />
-        </Grid>
-        <Grid Grid.Column="1">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="*" />
-                <RowDefinition Height="2*" />
-                <RowDefinition Height="6*" />
-            </Grid.RowDefinitions>
-            <GroupBox Header="Configuration du stream" Margin="5,10,10,5">
+        </GroupBox>
+        <Image Grid.Column="0" Grid.Row="3" Source="{Binding BodiesImageSource, Mode=Default, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:MainWindow}}}" Margin="10,5,5,5" Stretch="Uniform" />
+        <Image Grid.Column="0" Grid.Row="4" Source="{Binding HeadsImageSource, Mode=Default, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:MainWindow}}}" Margin="10,5,5,5" Stretch="Uniform" />
+
+        <GroupBox Grid.Column="1" Grid.Row="0" Header="Configuration du stream" Margin="5,10,10,5">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <ComboBox x:Name="CameraStreamSelectBox" ItemsSource="{Binding ListCameras, Mode=Default, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:MainWindow}}}"  Margin="5,5,5,5" SelectionChanged="CameraStream_SelectionChanged"/>
+                <Button Grid.Column="1" x:Name="StartStopStreamButton" Content="Démarrer le stream" Margin="5,5,5,5" Cursor="Hand" Click="StartStopStream_Click"/>
+            </Grid>
+        </GroupBox>
+        <GroupBox Grid.Column="1" Grid.Row="1" Grid.RowSpan="2" Header="Ajouter / Supprimer une zone" Margin="5,5,10,5">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
                 <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="2*" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <ComboBox x:Name="CameraStreamSelectBox" ItemsSource="{Binding ListCameras, Mode=Default, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:MainWindow}}}"  Margin="5,5,5,5" SelectionChanged="CameraStream_SelectionChanged"/>
-                    <Button Grid.Column="1" x:Name="StartStopStreamButton" Content="Démarrer le stream" Margin="5,5,5,5" Cursor="Hand" Click="StartStopStream_Click"/>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="2*" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Grid Grid.Row="0" Margin="0,0,0,5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="3*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <ComboBox x:Name="AddCameraZoneSelectBox" ItemsSource="{Binding ListCameras, Mode=Default, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:MainWindow}}}" Margin="5,5,5,0" SelectionChanged="CameraZone_SelectionChanged"/>
+                        <Rectangle Grid.Column="1" x:Name="AddPreviewColorRectangle" Width="20" Height="20" Fill="Black" HorizontalAlignment="Right" Margin="5,5,5,0" />
+                        <TextBox Grid.Column="1" x:Name="AddColorTextBox" Margin="5,5,30,0" Tag="Couleur" PreviewTextInput="ColorValidationTextBox" TextChanged="AddColorTextBlock_TextChanged"/>
+                    </Grid>
+                    <Grid Grid.Row="1" Margin="0,0,0,5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <TextBox x:Name="AddX1TextBox" Grid.Row="0" Grid.Column="0" Margin="5,5,5,0" Tag="Point n°1 : X" PreviewTextInput="NumberValidationTextBox"/>
+                        <TextBox x:Name="AddZ1TextBox" Grid.Row="0" Grid.Column="1" Margin="5,5,5,0" Tag="Point n°1 : Z" PreviewTextInput="NumberValidationTextBox"/>
+                        <TextBox x:Name="AddX2TextBox" Grid.Row="0" Grid.Column="2" Margin="5,5,5,0" Tag="Point n°2 : X" PreviewTextInput="NumberValidationTextBox"/>
+                        <TextBox x:Name="AddZ2TextBox" Grid.Row="0" Grid.Column="3" Margin="5,5,5,0" Tag="Point n°2 : Z" PreviewTextInput="NumberValidationTextBox"/>
+                        <TextBox x:Name="AddX3TextBox" Grid.Row="1" Grid.Column="0" Margin="5,5,5,0" Tag="Point n°3 : X" PreviewTextInput="NumberValidationTextBox"/>
+                        <TextBox x:Name="AddZ3TextBox" Grid.Row="1" Grid.Column="1" Margin="5,5,5,0" Tag="Point n°3 : Z" PreviewTextInput="NumberValidationTextBox"/>
+                        <TextBox x:Name="AddX4TextBox" Grid.Row="1" Grid.Column="2" Margin="5,5,5,0" Tag="Point n°4 : X" PreviewTextInput="NumberValidationTextBox"/>
+                        <TextBox x:Name="AddZ4TextBox" Grid.Row="1" Grid.Column="3" Margin="5,5,5,0" Tag="Point n°4 : Z" PreviewTextInput="NumberValidationTextBox"/>
+                    </Grid>
+                    <Button Grid.Row="2" x:Name="AddZone" Content="Ajouter une zone" Margin="5,5,5,5" Cursor="Hand" Click="AddZone_Click"/>
                 </Grid>
-            </GroupBox>
-            <GroupBox Grid.Row="1" Header="Ajouter / Supprimer une zone" Margin="5,5,10,5">
+                <Image Grid.Column="1" x:Name="AddPreviewImage" Margin="5,5,5,5" Stretch="Uniform"/>
+            </Grid>
+        </GroupBox>
+        <ListView Grid.Column="1" Grid.Row="3" Grid.RowSpan="2" x:Name="ZonesDataGrid" ItemsSource="{Binding ListZones, Mode=Default, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:MainWindow}}}" Margin="5,5,10,10" MouseDoubleClick="ZonesDataGrid_MouseDoubleClick">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Width="30">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <Rectangle Height="20" Width="20" Fill="{Binding Path=BrushColor}"/>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                    <GridViewColumn DisplayMemberBinding="{Binding Path=Camera}" Header="Caméra" Width="200"/>
+                    <GridViewColumn DisplayMemberBinding="{Binding Path=X1}" Header="P1 : X" Width="100"/>
+                    <GridViewColumn DisplayMemberBinding="{Binding Path=Z1}" Header="P1 : Z" Width="100"/>
+                    <GridViewColumn DisplayMemberBinding="{Binding Path=X2}" Header="P2 : X" Width="100"/>
+                    <GridViewColumn DisplayMemberBinding="{Binding Path=Z2}" Header="P2 : Z" Width="100"/>
+                    <GridViewColumn DisplayMemberBinding="{Binding Path=X3}" Header="P3 : X" Width="100"/>
+                    <GridViewColumn DisplayMemberBinding="{Binding Path=Z3}" Header="P3 : Z" Width="100"/>
+                    <GridViewColumn DisplayMemberBinding="{Binding Path=X4}" Header="P4 : X" Width="100"/>
+                    <GridViewColumn DisplayMemberBinding="{Binding Path=Z4}" Header="P4 : Z" Width="100"/>
+                </GridView>
+            </ListView.View>
+        </ListView>
+
+        <Grid x:Name="EditGrid" Grid.Column="1" Grid.Row="1" Grid.RowSpan="4" Margin="5,5,10,10" Visibility="Hidden">
+            <Rectangle Fill="{DynamicResource BackgroundShadow}"/>
+
+            <GroupBox Grid.Column="1" Grid.Row="1" Grid.RowSpan="4" Height="190" Header="Modifier / Supprimer la zone" Margin="10,5,10,5" Background="{DynamicResource BackgroundColour}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="2*" />
@@ -83,9 +156,9 @@
                                 <ColumnDefinition Width="3*" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
-                            <ComboBox x:Name="CameraZoneSelectBox" ItemsSource="{Binding ListCameras, Mode=Default, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:MainWindow}}}" Margin="5,5,5,0" SelectionChanged="CameraZone_SelectionChanged"/>
-                            <Rectangle Grid.Column="1" x:Name="PrviewColorRectangle" Width="20" Height="20" Fill="Black" HorizontalAlignment="Right" Margin="5,5,5,0" />
-                            <TextBox Grid.Column="1" x:Name="ColorTextBox" Margin="5,5,30,0" Tag="Couleur" PreviewTextInput="ColorValidationTextBox" TextChanged="ColorTextBlock_TextChanged"/>
+                            <ComboBox x:Name="EditCameraZoneSelectBox" ItemsSource="{Binding ListCameras, Mode=Default, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:MainWindow}}}" Margin="5,5,5,0" SelectionChanged="CameraZone_SelectionChanged"/>
+                            <Rectangle Grid.Column="1" x:Name="EditPreviewColorRectangle" Width="20" Height="20" Fill="Black" HorizontalAlignment="Right" Margin="5,5,5,0" />
+                            <TextBox Grid.Column="1" x:Name="EditColorTextBox" Margin="5,5,30,0" Tag="Couleur" PreviewTextInput="ColorValidationTextBox" TextChanged="EditColorTextBlock_TextChanged"/>
                         </Grid>
                         <Grid Grid.Row="1" Margin="0,0,0,5">
                             <Grid.ColumnDefinitions>
@@ -98,42 +171,35 @@
                                 <RowDefinition Height="*" />
                                 <RowDefinition Height="*" />
                             </Grid.RowDefinitions>
-                            <TextBox x:Name="X1" Grid.Row="0" Grid.Column="0" Margin="5,5,5,0" Tag="Point n°1 : X" PreviewTextInput="NumberValidationTextBox"/>
-                            <TextBox x:Name="Z1" Grid.Row="0" Grid.Column="1" Margin="5,5,5,0" Tag="Point n°1 : Z" PreviewTextInput="NumberValidationTextBox"/>
-                            <TextBox x:Name="X2" Grid.Row="0" Grid.Column="2" Margin="5,5,5,0" Tag="Point n°2 : X" PreviewTextInput="NumberValidationTextBox"/>
-                            <TextBox x:Name="Z2" Grid.Row="0" Grid.Column="3" Margin="5,5,5,0" Tag="Point n°2 : Z" PreviewTextInput="NumberValidationTextBox"/>
-                            <TextBox x:Name="X3" Grid.Row="1" Grid.Column="0" Margin="5,5,5,0" Tag="Point n°3 : X" PreviewTextInput="NumberValidationTextBox"/>
-                            <TextBox x:Name="Z3" Grid.Row="1" Grid.Column="1" Margin="5,5,5,0" Tag="Point n°3 : Z" PreviewTextInput="NumberValidationTextBox"/>
-                            <TextBox x:Name="X4" Grid.Row="1" Grid.Column="2" Margin="5,5,5,0" Tag="Point n°4 : X" PreviewTextInput="NumberValidationTextBox"/>
-                            <TextBox x:Name="Z4" Grid.Row="1" Grid.Column="3" Margin="5,5,5,0" Tag="Point n°4 : Z" PreviewTextInput="NumberValidationTextBox"/>
+                            <TextBox x:Name="EditX1TextBox" Grid.Row="0" Grid.Column="0" Margin="5,5,5,0" Tag="Point n°1 : X" PreviewTextInput="NumberValidationTextBox"/>
+                            <TextBox x:Name="EditZ1TextBox" Grid.Row="0" Grid.Column="1" Margin="5,5,5,0" Tag="Point n°1 : Z" PreviewTextInput="NumberValidationTextBox"/>
+                            <TextBox x:Name="EditX2TextBox" Grid.Row="0" Grid.Column="2" Margin="5,5,5,0" Tag="Point n°2 : X" PreviewTextInput="NumberValidationTextBox"/>
+                            <TextBox x:Name="EditZ2TextBox" Grid.Row="0" Grid.Column="3" Margin="5,5,5,0" Tag="Point n°2 : Z" PreviewTextInput="NumberValidationTextBox"/>
+                            <TextBox x:Name="EditX3TextBox" Grid.Row="1" Grid.Column="0" Margin="5,5,5,0" Tag="Point n°3 : X" PreviewTextInput="NumberValidationTextBox"/>
+                            <TextBox x:Name="EditZ3TextBox" Grid.Row="1" Grid.Column="1" Margin="5,5,5,0" Tag="Point n°3 : Z" PreviewTextInput="NumberValidationTextBox"/>
+                            <TextBox x:Name="EditX4TextBox" Grid.Row="1" Grid.Column="2" Margin="5,5,5,0" Tag="Point n°4 : X" PreviewTextInput="NumberValidationTextBox"/>
+                            <TextBox x:Name="EditZ4TextBox" Grid.Row="1" Grid.Column="3" Margin="5,5,5,0" Tag="Point n°4 : Z" PreviewTextInput="NumberValidationTextBox"/>
                         </Grid>
-                        <Button Grid.Row="2" x:Name="AddZone" Content="Ajouter la zone" Margin="5,5,5,5" Cursor="Hand" Click="AddZone_Click"/>
+                        <Grid Grid.Row="2" Margin="0,0,0,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Button Grid.Column="0" x:Name="EditZoneButton" Content="Modifier la zone" Margin="5,5,5,0" Cursor="Hand" Click="EditZone_Click"/>
+                            <Button Grid.Column="1" x:Name="DeleteZoneButton" Content="Supprimer une zone" Margin="5,5,5,0" Cursor="Hand" Click="DeleteZone_Click"/>
+                        </Grid>
                     </Grid>
-                    <Image Grid.Column="1" x:Name="Image" Margin="5,5,5,5" Stretch="Uniform"/>
+                    <Image Grid.Column="1" x:Name="EditPreviewImage" Margin="5,5,5,5" Stretch="Uniform"/>
                 </Grid>
             </GroupBox>
-            <ListView Grid.Row="2" x:Name="ZonesDataGrid" ItemsSource="{Binding ListZones, Mode=Default, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:MainWindow}}}" Margin="5,5,10,10">
-                <ListView.View>
-                    <GridView>
-                        <GridViewColumn Width="30">
-                            <GridViewColumn.CellTemplate>
-                                <DataTemplate>
-                                    <Rectangle Height="20" Width="20" Fill="{Binding Path=BrushColor}"/>
-                                </DataTemplate>
-                            </GridViewColumn.CellTemplate>
-                        </GridViewColumn>
-                        <GridViewColumn DisplayMemberBinding="{Binding Path=Camera}" Header="Caméra" Width="200"/>
-                        <GridViewColumn DisplayMemberBinding="{Binding Path=X1}" Header="P1 : X" Width="100"/>
-                        <GridViewColumn DisplayMemberBinding="{Binding Path=Z1}" Header="P1 : Z" Width="100"/>
-                        <GridViewColumn DisplayMemberBinding="{Binding Path=X2}" Header="P2 : X" Width="100"/>
-                        <GridViewColumn DisplayMemberBinding="{Binding Path=Z2}" Header="P2 : Z" Width="100"/>
-                        <GridViewColumn DisplayMemberBinding="{Binding Path=X3}" Header="P3 : X" Width="100"/>
-                        <GridViewColumn DisplayMemberBinding="{Binding Path=Z3}" Header="P3 : Z" Width="100"/>
-                        <GridViewColumn DisplayMemberBinding="{Binding Path=X4}" Header="P4 : X" Width="100"/>
-                        <GridViewColumn DisplayMemberBinding="{Binding Path=Z4}" Header="P4 : Z" Width="100"/>
-                    </GridView>
-                </ListView.View>
-            </ListView>
+
+            <Grid Height="190" Margin="5,5,5,5" HorizontalAlignment="Right">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="30" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Button x:Name="ClosePopInButton" Content="Annuler" Width="60" Height="25" Margin="10,0,10,0" Cursor="Hand" Click="ClosePopInButton_Click"/>
+            </Grid>
         </Grid>
     </Grid>
 </Window>
