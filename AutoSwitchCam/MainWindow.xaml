@@ -62,9 +62,11 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="2*" />
                     <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
-                <ComboBox x:Name="CameraStreamSelectBox" ItemsSource="{Binding ListCameras, Mode=Default, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:MainWindow}}}"  Margin="5,5,5,5" SelectionChanged="CameraStream_SelectionChanged"/>
-                <Button Grid.Column="1" x:Name="StartStopStreamButton" Content="Démarrer le stream" Margin="5,5,5,5" Cursor="Hand" Click="StartStopStream_Click"/>
+                <ComboBox Grid.Column="0" x:Name="CameraStreamSelectBox" ItemsSource="{Binding ListCameras, Mode=Default, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:MainWindow}}}"  Margin="5,5,5,5" SelectionChanged="CameraStream_SelectionChanged"/>
+                <ComboBox Grid.Column="1" x:Name="ResolutionSelectBox" ItemsSource="{Binding ListResolutions, Mode=Default, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:MainWindow}}}"  Margin="5,5,5,5" SelectionChanged="Resolution_SelectionChanged"/>
+                <Button Grid.Column="2" x:Name="StartStopStreamButton" Content="Démarrer le stream" Margin="5,5,5,5" Cursor="Hand" Click="StartStopStream_Click"/>
             </Grid>
         </GroupBox>
         <GroupBox Grid.Column="1" Grid.Row="1" Grid.RowSpan="2" Header="Ajouter / Supprimer une zone" Margin="5,5,10,5">

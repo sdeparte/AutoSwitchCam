@@ -27,6 +27,9 @@ namespace AutoSwitchCam
 
         private readonly ConfigReader _configReader = new ConfigReader();
 
+        private readonly ObservableCollection<Resolution> _listResolutions = new ObservableCollection<Resolution>();
+        public ObservableCollection<Resolution> ListResolutions { get { return _listResolutions; } }
+
         private readonly ObservableCollection<Camera> _listCameras = new ObservableCollection<Camera>();
         public ObservableCollection<Camera> ListCameras { get { return _listCameras; } }
 
@@ -64,12 +67,23 @@ namespace AutoSwitchCam
 
             _configReader.readConfigFiles(this);
 
+            InitResolutionsSelectors();
+
             _mjpegServer = new MjpegServer("http://+:80/");
 
             _kinectDetector = new KinectDetector(this);
             _kinectDetector.NewPosition += Kinect_NewPosition;
 
             InitHelpersSelectors();
+        }
+
+        private void InitResolutionsSelectors()
+        {
+            _listResolutions.Add(new Resolution() { Width = 1280, Height = 720 });
+            _listResolutions.Add(new Resolution() { Width = 1920, Height = 1080 });
+            _listResolutions.Add(new Resolution() { Width = 2560, Height = 1440 });
+
+            ResolutionSelectBox.SelectedIndex = 2;
         }
 
         private void InitCameras()
@@ -79,21 +93,7 @@ namespace AutoSwitchCam
             foreach (FilterInfo filterInfo in _filterInfoCollection)
             {
                 _listCameras.Add(new Camera() { FilterInfo = filterInfo });
-
-                VideoCaptureDevice videoCaptureDevice = new VideoCaptureDevice(filterInfo.MonikerString);
-
-                foreach (VideoCapabilities videoCapabilities in videoCaptureDevice.VideoCapabilities)
-                {
-                    if (videoCapabilities.FrameSize.Width <= 1920 && videoCapabilities.FrameSize.Height <= 1080 &&
-                        (videoCaptureDevice.VideoResolution == null || videoCapabilities.FrameSize.Width > videoCaptureDevice.VideoResolution.FrameSize.Width))
-                    {
-                        videoCaptureDevice.VideoResolution = videoCapabilities;
-                    }
-                }
-
-                videoCaptureDevice.Start();
-
-                _videoCaptureDevices.Add(videoCaptureDevice);
+                _videoCaptureDevices.Add( new VideoCaptureDevice(filterInfo.MonikerString));
             }
 
             CameraStreamSelectBox.SelectedIndex = 0;
@@ -157,6 +157,30 @@ namespace AutoSwitchCam
             Zone zoneToDisplay = ZoneHelper.GetZoneToDisplay(_listZones, _listHeads);
 
             CameraStreamSelectBox.SelectedIndex = zoneToDisplay?.CameraIndex ?? -1;
+        }
+
+        private void Resolution_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            foreach (VideoCaptureDevice videoCaptureDevice in _videoCaptureDevices)
+            {
+                if (videoCaptureDevice.IsRunning)
+                {
+                    videoCaptureDevice.SignalToStop();
+                    videoCaptureDevice.WaitForStop();
+                }
+
+                Resolution resolution = (Resolution)ResolutionSelectBox.SelectedItem;
+
+                foreach (VideoCapabilities videoCapabilities in videoCaptureDevice.VideoCapabilities)
+                {
+                    if (videoCapabilities.FrameSize.Width <= resolution.Width && videoCapabilities.FrameSize.Height <= resolution.Height)
+                    {
+                        videoCaptureDevice.VideoResolution = videoCapabilities;
+                    }
+                }
+
+                videoCaptureDevice.Start();
+            }
         }
 
         private void CameraStream_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -335,7 +359,7 @@ namespace AutoSwitchCam
             }
             else
             {
-                EditPreviewColorRectangle.Fill = System.Windows.Media.Brushes.Black;
+                EditPreviewColorRectangle.Fill = Brushes.Black;
             }
         }
 
