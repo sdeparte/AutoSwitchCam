@@ -1,6 +1,4 @@
-﻿
-using AutoSwitchCam.Helper;
-using System.Drawing;
+﻿using AutoSwitchCam.Helper;
 using System.Windows.Media;
 
 namespace AutoSwitchCam.Model
@@ -24,11 +22,7 @@ namespace AutoSwitchCam.Model
             }
         }
 
-        public string CameraName { get; set; }
-
-        public int CameraIndex { get; set; }
-
-        public string Camera { get { return $"{CameraName} ({CameraIndex})"; } }
+        public string SourceName { get; set; }
 
         public double X1 { get; set; }
 

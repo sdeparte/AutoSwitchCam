@@ -1,19 +1,14 @@
-﻿using AForge.Video;
-using AForge.Video.DirectShow;
-using AutoSwitchCam.Helper;
+﻿using AutoSwitchCam.Helper;
 using AutoSwitchCam.Model;
 using AutoSwitchCam.Services;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
-using System.IO;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 
 namespace AutoSwitchCam
 {
@@ -22,82 +17,61 @@ namespace AutoSwitchCam
     /// </summary>
     public partial class MainWindow : Window
     {
-        private FilterInfoCollection _filterInfoCollection;
-        private readonly List<VideoCaptureDevice> _videoCaptureDevices = new List<VideoCaptureDevice>();
+        private readonly ConfigReader _configReader;
+        private readonly OBSLinker _obsLinker;
 
-        private readonly ConfigReader _configReader = new ConfigReader();
+        private ObservableCollection<ObservableScene> _listScenes = new ObservableCollection<ObservableScene>();
+        public ObservableCollection<ObservableScene> ListScenes { get { return _listScenes; } }
 
-        private readonly ObservableCollection<Resolution> _listResolutions = new ObservableCollection<Resolution>();
-        public ObservableCollection<Resolution> ListResolutions { get { return _listResolutions; } }
-
-        private readonly ObservableCollection<Camera> _listCameras = new ObservableCollection<Camera>();
-        public ObservableCollection<Camera> ListCameras { get { return _listCameras; } }
+        private ObservableCollection<ObservableSceneItem> _listSceneItems = new ObservableCollection<ObservableSceneItem>();
+        public ObservableCollection<ObservableSceneItem> ListSceneItems { get { return _listSceneItems; } }
 
         private ObservableCollection<Zone> _listZones = new ObservableCollection<Zone>();
-
-        public ObservableCollection<Zone> ListZones
-        {
-            get
-            {
-                return _listZones;
-            }
-
-            set
-            {
-                _listZones = value;
-            }
-        }
+         public ObservableCollection<Zone> ListZones { get { return _listZones; } }
 
         private readonly ObservableCollection<Head> _listHeads = new ObservableCollection<Head>();
         public ObservableCollection<Head> ListHeads { get { return _listHeads; } }
 
-        private MjpegServer _mjpegServer;
-
         private KinectDetector _kinectDetector;
 
-        public ImageSource BodiesImageSource { get { return _kinectDetector.BodiesImageSource; } }
+        public ImageSource BodiesImageSource { get { return _kinectDetector?.BodiesImageSource; } }
 
-        public ImageSource HeadsImageSource { get { return _kinectDetector.HeadsImageSource; } }
+        public ImageSource HeadsImageSource { get { return _kinectDetector?.HeadsImageSource; } }
 
         public MainWindow()
         {
             InitializeComponent();
 
-            InitCameras();
+            _configReader = new ConfigReader();
 
-            _configReader.readConfigFiles(this);
+            _obsLinker = new OBSLinker();
+            _obsLinker.OBSLinker_Connected += OBSLinker_Connected;
+            _obsLinker.Connect();
+        }
 
-            InitResolutionsSelectors();
+        private void OBSLinker_Connected(object sender, ObservableCollection<ObservableScene> listScenes)
+        {
+            _listScenes = listScenes;
 
-            _mjpegServer = new MjpegServer("http://+:80/");
+            Config config = _configReader.readConfigFiles();
+
+            if (config != null)
+            {
+                foreach (ObservableScene scene in _listScenes)
+                {
+                    if (scene.OBSScene.Name == config.SceneName)
+                    {
+                        PrimarySceneSelectBox.SelectedItem = scene;
+                    }
+                }
+
+                _listZones = config.Zones;
+            }
 
             _kinectDetector = new KinectDetector(this);
             _kinectDetector.NewPosition += Kinect_NewPosition;
 
             InitHelpersSelectors();
-        }
-
-        private void InitResolutionsSelectors()
-        {
-            _listResolutions.Add(new Resolution() { Width = 1280, Height = 720 });
-            _listResolutions.Add(new Resolution() { Width = 1920, Height = 1080 });
-            _listResolutions.Add(new Resolution() { Width = 2560, Height = 1440 });
-
-            ResolutionSelectBox.SelectedIndex = 2;
-        }
-
-        private void InitCameras()
-        {
-            _filterInfoCollection = new FilterInfoCollection(FilterCategory.VideoInputDevice);
-
-            foreach (FilterInfo filterInfo in _filterInfoCollection)
-            {
-                _listCameras.Add(new Camera() { FilterInfo = filterInfo });
-                _videoCaptureDevices.Add( new VideoCaptureDevice(filterInfo.MonikerString));
-            }
-
-            CameraStreamSelectBox.SelectedIndex = 0;
-            AddCameraZoneSelectBox.SelectedIndex = 0;
         }
 
         private void InitHelpersSelectors()
@@ -111,25 +85,6 @@ namespace AutoSwitchCam
             for (int i = 1; i <= 4; i++) { points.Add($"Point n°{i}"); }
             PointsSelectBox.ItemsSource = points;
             PointsSelectBox.SelectedIndex = 0;
-        }
-
-        private void StartStopStream_Click(object sender, RoutedEventArgs e)
-        {
-            if (_mjpegServer.IsStarted)
-            {
-                StartStopStreamButton.Content = "Démarrer le stream";
-                _mjpegServer.Stop();
-            }
-            else
-            {
-                StartStopStreamButton.Content = "Arrêter le stream";
-                _mjpegServer.Start();
-            }
-        }
-
-        private void StopStream_Click(object sender, RoutedEventArgs e)
-        {
-            _mjpegServer.Stop();
         }
 
         private void Kinect_NewPosition(object sender, Head[] heads)
@@ -156,89 +111,13 @@ namespace AutoSwitchCam
 
             Zone zoneToDisplay = ZoneHelper.GetZoneToDisplay(_listZones, _listHeads);
 
-            CameraStreamSelectBox.SelectedIndex = zoneToDisplay?.CameraIndex ?? -1;
-        }
-
-        private void Resolution_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            foreach (VideoCaptureDevice videoCaptureDevice in _videoCaptureDevices)
+            foreach (ObservableSceneItem sceneItem in _listSceneItems)
             {
-                if (videoCaptureDevice.IsRunning)
+                if (sceneItem.SceneItem.SourceName == zoneToDisplay?.SourceName)
                 {
-                    videoCaptureDevice.SignalToStop();
-                    videoCaptureDevice.WaitForStop();
+                    CurrentSceneItemSelectBox.SelectedItem = sceneItem;
+                    break;
                 }
-
-                Resolution resolution = (Resolution)ResolutionSelectBox.SelectedItem;
-
-                foreach (VideoCapabilities videoCapabilities in videoCaptureDevice.VideoCapabilities)
-                {
-                    if (videoCapabilities.FrameSize.Width <= resolution.Width && videoCapabilities.FrameSize.Height <= resolution.Height)
-                    {
-                        videoCaptureDevice.VideoResolution = videoCapabilities;
-                    }
-                }
-
-                videoCaptureDevice.Start();
-            }
-        }
-
-        private void CameraStream_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (CameraStreamSelectBox.SelectedIndex >= 0)
-            {
-                foreach (VideoCaptureDevice captureDevice in _videoCaptureDevices)
-                {
-                    captureDevice.NewFrame -= StreamVideoCapture_NewFrame;
-                }
-
-                VideoCaptureDevice videoCaptureDevice = _videoCaptureDevices[CameraStreamSelectBox.SelectedIndex];
-
-                videoCaptureDevice.NewFrame += StreamVideoCapture_NewFrame;
-            }
-        }
-
-        private void StreamVideoCapture_NewFrame(object sender, NewFrameEventArgs eventArgs)
-        {
-            if (_mjpegServer != null && _mjpegServer.IsStarted)
-            {
-                MemoryStream imageBuffer = JpegEncoderHelper.BitmapToJpeg(eventArgs.Frame);
-
-                _mjpegServer?.NewFrame(imageBuffer);
-            }
-        }
-
-        private void CameraZone_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            foreach (VideoCaptureDevice captureDevice in _videoCaptureDevices)
-            {
-                captureDevice.NewFrame -= PreviewVideoCapture_NewFrame;
-            }
-
-            VideoCaptureDevice videoCaptureDevice = _videoCaptureDevices[AddCameraZoneSelectBox.SelectedIndex];
-
-            videoCaptureDevice.NewFrame += PreviewVideoCapture_NewFrame;
-        }
-
-        private void PreviewVideoCapture_NewFrame(object sender, NewFrameEventArgs eventArgs)
-        {
-            if (_mjpegServer != null && !_mjpegServer.IsStarted)
-            {
-                MemoryStream imageBuffer = JpegEncoderHelper.BitmapToJpeg(eventArgs.Frame);
-
-                Application.Current.Dispatcher.Invoke(new Action(() =>
-                {
-                    imageBuffer.Position = 0;
-
-                    BitmapImage bitmapImage = new BitmapImage();
-                    bitmapImage.BeginInit();
-                    bitmapImage.StreamSource = imageBuffer;
-                    bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                    bitmapImage.EndInit();
-
-                    AddPreviewImage.Source = bitmapImage;
-                    EditPreviewImage.Source = bitmapImage;
-                }));
             }
         }
 
@@ -289,8 +168,7 @@ namespace AutoSwitchCam
             _listZones.Add(new Zone()
             {
                 Color = AddColorTextBox.Text,
-                CameraName = ((Camera)AddCameraZoneSelectBox.SelectedItem).FilterInfo.Name,
-                CameraIndex = AddCameraZoneSelectBox.SelectedIndex,
+                SourceName = ((ObservableSceneItem)AddSceneItemSelectBox.SelectedItem).SceneItem.SourceName,
                 X1 = double.Parse(AddX1TextBox.Text, CultureInfo.InvariantCulture),
                 Z1 = double.Parse(AddZ1TextBox.Text, CultureInfo.InvariantCulture),
                 X2 = double.Parse(AddX2TextBox.Text, CultureInfo.InvariantCulture),
@@ -301,7 +179,13 @@ namespace AutoSwitchCam
                 Z4 = double.Parse(AddZ4TextBox.Text, CultureInfo.InvariantCulture),
             });
 
-            _configReader.updateConfigFiles(this);
+            Config config = new Config
+            {
+                SceneName = ((ObservableScene)PrimarySceneSelectBox.SelectedItem).OBSScene.Name,
+                Zones = _listZones
+            };
+
+            _configReader.updateConfigFiles(config);
         }
 
         private void AddColorTextBlock_TextChanged(object sender, TextChangedEventArgs e)
@@ -309,11 +193,11 @@ namespace AutoSwitchCam
             if (ColorHelper.IsColorString.IsMatch(AddColorTextBox.Text))
             {
                 System.Drawing.Color color = ColorHelper.ToColor(AddColorTextBox.Text);
-                AddPreviewColorRectangle.Fill = new SolidColorBrush(System.Windows.Media.Color.FromRgb(color.R, color.G, color.B));
+                AddPreviewColorRectangle.Fill = new SolidColorBrush(Color.FromRgb(color.R, color.G, color.B));
             }
             else
             {
-                AddPreviewColorRectangle.Fill = System.Windows.Media.Brushes.Black;
+                AddPreviewColorRectangle.Fill = Brushes.Black;
             }
         }
 
@@ -333,8 +217,7 @@ namespace AutoSwitchCam
                 Zone zone = _listZones[ZonesDataGrid.SelectedIndex];
 
                 zone.Color = EditColorTextBox.Text;
-                zone.CameraName = ((Camera)EditCameraZoneSelectBox.SelectedItem).FilterInfo.Name;
-                zone.CameraIndex = EditCameraZoneSelectBox.SelectedIndex;
+                zone.SourceName = ((ObservableSceneItem)EditSceneItemSelectBox.SelectedItem).SceneItem.SourceName;
                 zone.X1 = double.Parse(EditX1TextBox.Text, CultureInfo.InvariantCulture);
                 zone.Z1 = double.Parse(EditZ1TextBox.Text, CultureInfo.InvariantCulture);
                 zone.X2 = double.Parse(EditX2TextBox.Text, CultureInfo.InvariantCulture);
@@ -344,7 +227,13 @@ namespace AutoSwitchCam
                 zone.X4 = double.Parse(EditX4TextBox.Text, CultureInfo.InvariantCulture);
                 zone.Z4 = double.Parse(EditZ4TextBox.Text, CultureInfo.InvariantCulture);
 
-                _configReader.updateConfigFiles(this);
+                Config config = new Config
+                {
+                    SceneName = ((ObservableScene)PrimarySceneSelectBox.SelectedItem).OBSScene.Name,
+                    Zones = _listZones
+                };
+
+                _configReader.updateConfigFiles(config);
             }
 
             ClosePopInButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
@@ -369,7 +258,13 @@ namespace AutoSwitchCam
             {
                 _listZones.RemoveAt(ZonesDataGrid.SelectedIndex);
 
-                _configReader.updateConfigFiles(this);
+                Config config = new Config
+                {
+                    SceneName = ((ObservableScene)PrimarySceneSelectBox.SelectedItem).OBSScene.Name,
+                    Zones = _listZones
+                };
+
+                _configReader.updateConfigFiles(config);
             }
 
             ClosePopInButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
@@ -388,21 +283,10 @@ namespace AutoSwitchCam
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            foreach (VideoCaptureDevice videoCaptureDevice in _videoCaptureDevices)
-            {
-                videoCaptureDevice.SignalToStop();
-            }
-
             if (_kinectDetector != null)
             {
                 _kinectDetector.Stop();
                 _kinectDetector = null;
-            }
-
-            if (_mjpegServer != null)
-            {
-                _mjpegServer.Stop();
-                _mjpegServer = null;
             }
         }
 
@@ -415,7 +299,15 @@ namespace AutoSwitchCam
             {
                 EditGrid.Visibility = Visibility.Visible;
 
-                EditCameraZoneSelectBox.SelectedIndex = zone.CameraIndex;
+                foreach (ObservableSceneItem sceneItem in _listSceneItems)
+                {
+                    if (sceneItem.SceneItem.SourceName == zone.SourceName)
+                    {
+                        EditSceneItemSelectBox.SelectedItem = sceneItem;
+                        break;
+                    }
+                }
+
                 EditColorTextBox.Text = zone.Color;
                 EditX1TextBox.Text = zone.X1.ToString(null, CultureInfo.InvariantCulture);
                 EditZ1TextBox.Text = zone.Z1.ToString(null, CultureInfo.InvariantCulture);
@@ -433,6 +325,32 @@ namespace AutoSwitchCam
             ZonesDataGrid.SelectedIndex = -1;
             ZonesDataGrid.Items.Refresh();
             EditGrid.Visibility = Visibility.Hidden;
+        }
+
+        private void PrimaryScene_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            _listSceneItems = _obsLinker.LoadOBSSceneItems((ObservableScene)PrimarySceneSelectBox.SelectedItem);
+            
+            CurrentSceneItemSelectBox.ItemsSource = _listSceneItems;
+            CurrentSceneItemSelectBox.SelectedIndex = 0;
+
+            AddSceneItemSelectBox.ItemsSource = _listSceneItems;
+            EditSceneItemSelectBox.ItemsSource = _listSceneItems;
+        }
+
+        private void CurrentSceneItem_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (CurrentSceneItemSelectBox.SelectedItem != null)
+            {
+                foreach (ObservableSceneItem sceneItem in _listSceneItems)
+                {
+                    _obsLinker.SetSceneVisibility(
+                        ((ObservableScene)PrimarySceneSelectBox.SelectedItem).OBSScene.Name,
+                        sceneItem.SceneItem.SourceName,
+                        sceneItem.SceneItem.SourceName == ((ObservableSceneItem)CurrentSceneItemSelectBox.SelectedItem).SceneItem.SourceName
+                    );
+                }
+            }
         }
     }
 }
