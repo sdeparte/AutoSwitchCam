@@ -5,7 +5,7 @@
     <TargetFramework>net461</TargetFramework>
     <UseWPF>true</UseWPF>
     <Platforms>AnyCPU</Platforms>
-    <ApplicationIcon />
+    <ApplicationIcon>Assets\Logo.ico</ApplicationIcon>
     <StartupObject />
   </PropertyGroup>
 
