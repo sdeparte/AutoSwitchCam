@@ -6,9 +6,10 @@ namespace AutoSwitchCam.Helper
 {
     class ZoneHelper
     {
-        public static Zone GetZoneToDisplay(ObservableCollection<Zone> zones, ObservableCollection<Head> heads)
+        public static Zone GetZoneToDisplay(ObservableCollection<Zone> zones, ObservableCollection<Head> heads, Zone currentZone)
         {
             int[] zoneHeadsCount = new int[zones.Count];
+            int maxZoneHeadsCount = 0;
 
             for (int indexHead = 0; indexHead < heads.Count; indexHead++)
             {
@@ -21,24 +22,33 @@ namespace AutoSwitchCam.Helper
                     if (PointInZone(zone, head.X, head.Z))
                     {
                         zoneHeadsCount[indexZone]++;
+
+                        if (zoneHeadsCount[indexZone] > maxZoneHeadsCount)
+                        {
+                            maxZoneHeadsCount = zoneHeadsCount[indexZone];
+                        }
                     }
                 }
             }
 
-            int maxZoneHeadsCount = 0;
+            int currentZoneIndex = zones.IndexOf(currentZone);
+
+            if (currentZoneIndex >= 0 && zoneHeadsCount[currentZoneIndex] == maxZoneHeadsCount)
+            {
+                return currentZone;
+            }
+
             int maxIndexZone = -1;
 
             for (int i = 0; i < zoneHeadsCount.Length; i++)
             {
-                if (zoneHeadsCount[i] > maxZoneHeadsCount)
+                if (zoneHeadsCount[i] == maxZoneHeadsCount)
                 {
                     maxIndexZone = i;
                 }
             }
 
-            return maxIndexZone >= 0 && maxIndexZone < zones.Count
-                ? zones[maxIndexZone]
-                : null;
+            return maxIndexZone >= 0 ? zones[maxIndexZone] : null;
         }
 
         public static Point[] ZoneToPointArray(Zone zone) => PointHelper.CoordonatesToPointArray(zone.X1, zone.Z1, zone.X2, zone.Z2, zone.X3, zone.Z3, zone.X4, zone.Z4);

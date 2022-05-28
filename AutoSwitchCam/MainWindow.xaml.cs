@@ -33,6 +33,7 @@ namespace AutoSwitchCam
         public ObservableCollection<Head> ListHeads { get { return _listHeads; } }
 
         private KinectDetector _kinectDetector;
+        private Zone _currentZone;
 
         public ImageSource BodiesImageSource { get { return _kinectDetector?.BodiesImageSource; } }
 
@@ -109,11 +110,11 @@ namespace AutoSwitchCam
                 return;
             }
 
-            Zone zoneToDisplay = ZoneHelper.GetZoneToDisplay(_listZones, _listHeads);
+            _currentZone = ZoneHelper.GetZoneToDisplay(_listZones, _listHeads, _currentZone);
 
             foreach (ObservableSceneItem sceneItem in _listSceneItems)
             {
-                if (sceneItem.SceneItem.SourceName == zoneToDisplay?.SourceName)
+                if (sceneItem.SceneItem.SourceName == _currentZone?.SourceName)
                 {
                     CurrentSceneItemSelectBox.SelectedItem = sceneItem;
                     break;
