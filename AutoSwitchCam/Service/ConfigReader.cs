@@ -30,7 +30,7 @@ namespace AutoSwitchCam.Services
 
         public void updateConfigFiles(Config config)
         {
-            using (FileStream fs = new FileStream(@"zones.xml", FileMode.OpenOrCreate))
+            using (FileStream fs = new FileStream(@"zones.xml", FileMode.Create))
             {
                 _zoneSerializer.Serialize(fs, config);
             }
